@@ -8,16 +8,18 @@ const {
   updateContactFavoriteStatusSchema
 } = require('./valid-contacts-router')
 
-router
-  .get('/', contactsController.getAllContacts)
-  .post('/', addContactSchema, contactsController.addContact)
+const guard = require('../../helper/guard')
 
 router
-  .get('/:contactId', contactsController.getContactByID)
-  .delete('/:contactId', contactsController.deleteContact)
-  .put('/:contactId', updateContactSchema, contactsController.updateContact)
-  .patch('/:contactId', updateContactSchema, contactsController.patchContact)
+  .get('/', guard, contactsController.getAllContacts)
+  .post('/', guard, addContactSchema, contactsController.addContact)
 
-router.patch('/:contactId/favorite', updateContactFavoriteStatusSchema, contactsController.updateFavoriteStatusOfContact)
+router
+  .get('/:contactId', guard, contactsController.getContactByID)
+  .delete('/:contactId', guard, contactsController.deleteContact)
+  .put('/:contactId', guard, updateContactSchema, contactsController.updateContact)
+  .patch('/:contactId', guard, updateContactSchema, contactsController.patchContact)
+
+router.patch('/:contactId/favorite', guard, updateContactFavoriteStatusSchema, contactsController.updateFavoriteStatusOfContact)
 
 module.exports = router;
