@@ -1,6 +1,9 @@
 const express = require("express")
 const logger = require("morgan")
 const cors = require("cors")
+/*Safity*/
+const helmet = require('helmet')
+// const rateLimit = require('express-rate-limit')
 
 const contactsRouter = require("./routes/contacts")
 const usersRouter = require('./routes/users')
@@ -10,6 +13,9 @@ const app = express()
 const formatsLogger = app.get("env") === "development" ? "dev" : "short"
 
 app.use(logger(formatsLogger))
+
+// app.use(helmet())
+
 app.use(cors({
   origin: '*',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',

@@ -22,4 +22,4 @@ router
 
 router.patch('/:contactId/favorite', guard, updateContactFavoriteStatusSchema, contactsController.updateFavoriteStatusOfContact)
 
-module.exports = router;
+module.exports = router

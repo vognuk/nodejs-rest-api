@@ -12,6 +12,7 @@ const HttpCode = {
     UNAUTHORIZED: 401,
     NOT_FOUND: 404,
     CONFLICT: 409,
+    TO_MANY_REQUESTS: 429,
 }
 
 module.exports = {

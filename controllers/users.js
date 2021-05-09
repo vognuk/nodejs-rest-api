@@ -11,18 +11,18 @@ const reg = async (req, res, next) => {
         return res.status(HttpCode.CONFLICT).json({
             status: 'error',
             code: HttpCode.CONFLICT,
-            message: 'Email is already use',
+            message: 'Email in use',
         })
     }
     try {
         const newUser = await Users.create(req.body)
         return res.status(HttpCode.CREATED).json({
-            status: 'success',
-            code: HttpCode.CREATED,
-            data: {
-                id: newUser.id,
+            status: '201 Created',
+            ContentType: res.ContentType,
+            // code: HttpCode.CREATED,
+            user: {
                 email: newUser.email,
-                gender: newUser.gender,
+                subscription: newUser.subscription,
             },
         })
     } catch (e) {
@@ -39,25 +39,32 @@ const login = async (req, res, next) => {
         return res.status(HttpCode.UNAUTHORIZED).json({
             status: 'error',
             code: HttpCode.UNAUTHORIZED,
-            message: 'Invalid credentials',
+            message: 'Email or password is wrong',
         })
     }
 
     const payload = { id: user.id }
     const token = jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '2h' })
-    await Users.updateToken(user.id, token)
+
+    const newUser = await Users.updateToken(user.id, token)
 
     return res.status(HttpCode.OK).json({
-        status: 'success',
+        status: '200 OK',
         code: HttpCode.OK,
-        data: { token },
+        token: { token },
+        user: {
+            email: newUser.email,
+            subscription: newUser.subscription,
+        },
     })
 }
 
 const logout = async (req, res, next) => {
     const id = req.user.id
     await Users.updateToken(id, null)
-    return res.status(HttpCode.NO_CONTENT).json({})
+    return res.status(HttpCode.NO_CONTENT).json({
+        status: '204 No Content'
+    })
 }
 
 module.exports = {
