@@ -36,6 +36,9 @@ const addContactSchema = Joi.object({
     Joi
       .boolean()
       .default(false),
+  owner:
+    Joi
+      .string()
 })
 
 const updateContactSchema = Joi.object({
