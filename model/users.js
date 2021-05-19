@@ -1,11 +1,19 @@
 const User = require('./schemas/user')
 
 const findById = async (id) => {
-    return await User.findOne({ _id: id })
+    return await User.findOne(
+        {
+            _id: id
+        }
+    )
 }
 
 const findByEmail = async (email) => {
-    return await User.findOne({ email })
+    return await User.findOne(
+        {
+            email
+        }
+    )
 }
 
 const create = async (userOptions) => {
@@ -14,7 +22,26 @@ const create = async (userOptions) => {
 }
 
 const updateToken = async (id, token) => {
-    return await User.updateOne({ _id: id }, { token })
+    return await User.updateOne(
+        {
+            _id: id
+        },
+        {
+            token
+        }
+    )
+}
+
+const updateAvatar = async (id, avatar, idCloudAvatar = null) => {
+    return await User.updateOne(
+        {
+            _id: id
+        },
+        {
+            avatar,
+            idCloudAvatar
+        }
+    )
 }
 
 module.exports = {
@@ -22,4 +49,5 @@ module.exports = {
     findByEmail,
     create,
     updateToken,
+    updateAvatar,
 }
