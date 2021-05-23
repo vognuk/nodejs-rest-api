@@ -18,27 +18,42 @@ cloudinary.config({
 const uploadToCloud = promisify(cloudinary.uploader.upload)
 
 const reg = async (req, res, next) => {
-    const { email } = req.body
-    const user = await Users.findByEmail(email)
+    const user = await Users.findByEmail(req.body.email)
     if (user) {
         return res.status(HttpCode.CONFLICT).json({
             status: 'error',
             code: HttpCode.CONFLICT,
-            message: 'Email in use',
+            message: 'Email is already use',
         })
     }
     try {
         const newUser = await Users.create(req.body)
-        return res.status(HttpCode.CREATED).json({
-            status: '201 Created',
-            ContentType: res.ContentType,
-            // code: HttpCode.CREATED,
-            user: {
-                email: newUser.email,
-                subscription: newUser.subscription,
-                avatar: newUser.avatarURL,
-            },
-        })
+        const { id, name, email, gender, avatar, verifyTokenEmail } = newUser
+
+        /*Hendler of error on email servise */
+        try {
+            const emailService = new EmailService(process.env.NODE_ENV)
+            await emailService.sendVerifyEmail(verifyTokenEmail, email, name)
+        } catch (e) {
+            // logger
+            console.log(e.message)
+        }
+
+        try {
+            const newUser = await Users.create(req.body)
+            return res.status(HttpCode.CREATED).json({
+                status: '201 Created',
+                ContentType: res.ContentType,
+                // code: HttpCode.CREATED,
+                user: {
+                    email: newUser.email,
+                    subscription: newUser.subscription,
+                    avatar: newUser.avatarURL,
+                },
+            })
+        } catch (e) {
+            next(e)
+        }
     } catch (e) {
         next(e)
     }
@@ -49,7 +64,7 @@ const login = async (req, res, next) => {
     const user = await Users.findByEmail(email)
     const isValidPassword = await user?.validPassword(password)
 
-    if (!user || !isValidPassword) {
+    if (!user || !isValidPassword || !user.verify) {
         return res.status(HttpCode.UNAUTHORIZED).json({
             status: 'error',
             code: HttpCode.UNAUTHORIZED,
@@ -77,7 +92,7 @@ const logout = async (req, res, next) => {
     const id = req.user.id
     await Users.updateToken(id, null)
     return res.status(HttpCode.NO_CONTENT).json({
-        status: '204 No Content'
+        Status: '204 No Content'
     })
 }
 
@@ -88,7 +103,7 @@ const updateAvatar = async (req, res, next) => {
     const { idCloudAvatar, avatarUrl } = await saveAvatarUserToCloud(req)
     await Users.updateAvatar(id, avatarUrl, idCloudAvatar)
     return res.status(HttpCode.OK).json({
-        status: '200 OK',
+        Status: '200 OK',
         ContentType: res.ContentType,
         ResponseBody: {
             avatarUrl
@@ -140,10 +155,62 @@ const saveAvatarUserToCloud = async (req) => {
     }
 }
 
+const verify = async (req, res, next) => {
+    try {
+        const user = await Users.findByVerifyTokenEmail(req.params.token)
+        if (user) {
+            await Users.updateVerifyToken(user.id, true, null)
+            return res.status(HttpCode.OK).json({
+                Status: '200 OK',
+                ResponseBody: {
+                    message: 'Verification successful',
+                },
+            })
+        }
+        return res.status(HttpCode.BAD_REQUEST).json({
+            Status: '404 Not Found',
+            ResponseBody: {
+                message: 'User not found'
+            }
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+const repeatEmailVerify = async (req, res, next) => {
+    try {
+        const user = await Users.findByEmail(req.body.email)
+        if (user) {
+            const { name, verifyTokenEmail, email } = user
+            const emailService = new EmailService(process.env.NODE_ENV)
+            await emailService.sendVerifyEmail(verifyTokenEmail, email, name)
+            return res.status(HttpCode.OK).json({
+                Status: '200 Ok',
+                ContentType: 'application/json',
+                ResponseBody: {
+                    "message": "Verification email sent"
+                }
+            })
+        }
+        return res.status(HttpCode.NOT_FOUND).json({
+            Status: '400 Bad Request',
+            ContentType: 'application/json',
+            ResponseBody: {
+                "message": "Verification has already been passed"
+            }
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     reg,
     login,
     logout,
     updateAvatar,
     saveAvatarUser,
+    verify,
+    repeatEmailVerify,
 }
