@@ -4,6 +4,7 @@ const gravatar = require('gravatar')
 const { Gender } = require('../../helper/constants')
 const bcrypt = require('bcryptjs')
 const SALT_FACTOR = 6
+const { nanoid } = require('nanoid')
 
 const userSchema = new Schema({
     name: {
@@ -46,7 +47,16 @@ const userSchema = new Schema({
         default: function () {
             return gravatar.url(this.email, { s: '250' }, true)
         }
-    }
+    },
+    verify: {
+        type: Boolean,
+        default: false,
+    },
+    verifyTokenEmail: {
+        type: String,
+        required: true,
+        default: nanoid(),
+    },
 },
     {
         versionKey: false,
